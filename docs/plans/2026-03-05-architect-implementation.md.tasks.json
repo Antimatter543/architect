@@ -1,0 +1,21 @@
+{
+  "planPath": "docs/plans/2026-03-05-architect-implementation.md",
+  "tasks": [
+    {"id": 7, "subject": "Task 0: Project Scaffolding", "status": "pending"},
+    {"id": 8, "subject": "Task 1: Pydantic Models & TypeScript Types", "status": "pending", "blockedBy": [7]},
+    {"id": 9, "subject": "Task 2: Cloud Services (Firestore + GCS)", "status": "pending", "blockedBy": [7, 8]},
+    {"id": 10, "subject": "Task 3: Agent Tools", "status": "pending", "blockedBy": [8, 9]},
+    {"id": 11, "subject": "Task 4: ADK Root Agent + System Prompt", "status": "pending", "blockedBy": [10]},
+    {"id": 12, "subject": "Task 5: WebSocket Session & FastAPI", "status": "pending", "blockedBy": [11]},
+    {"id": 13, "subject": "Task 6: Audio Worklets (Copy from MUSE)", "status": "pending", "blockedBy": [7]},
+    {"id": 14, "subject": "Task 7: Frontend Custom Hooks", "status": "pending", "blockedBy": [7, 13]},
+    {"id": 15, "subject": "Task 8: UI Components", "status": "pending", "blockedBy": [14]},
+    {"id": 16, "subject": "Task 9: Main App Assembly", "status": "pending", "blockedBy": [14, 15]},
+    {"id": 17, "subject": "Task 10: Deployment Scripts", "status": "pending", "blockedBy": [16]},
+    {"id": 18, "subject": "Task 11: README + Architecture Diagram", "status": "pending", "blockedBy": [16]},
+    {"id": 19, "subject": "Task 12: E2E Testing & Polish", "status": "pending", "blockedBy": [16, 12, 18]},
+    {"id": 20, "subject": "Task 13: Deploy to GCP", "status": "pending", "blockedBy": [19]},
+    {"id": 21, "subject": "Task 14: Demo Video + Submission", "status": "pending", "blockedBy": [20]}
+  ],
+  "lastUpdated": "2026-03-05T00:00:00Z"
+}
