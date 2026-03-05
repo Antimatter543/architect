@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
+import { useAuth0 } from '@auth0/auth0-react';
 import { useWebSocket } from './hooks/useWebSocket';
 import { useAudioCapture } from './hooks/useAudioCapture';
 import { useAudioPlayback } from './hooks/useAudioPlayback';
@@ -29,6 +30,8 @@ export default function App() {
   const [roomAnalysis, setRoomAnalysis] = useState<RoomAnalysis | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>('transcript');
   const audioInitRef = useRef(false);
+
+  const { isAuthenticated, loginWithRedirect, getAccessTokenSilently, isLoading } = useAuth0();
 
   const { playAudio, initialize: initAudio } = useAudioPlayback();
 
@@ -79,11 +82,20 @@ export default function App() {
   });
 
   const handleStartSession = async () => {
+    if (!isAuthenticated) {
+      loginWithRedirect();
+      return;
+    }
     if (!audioInitRef.current) {
       await initAudio();
       audioInitRef.current = true;
     }
-    connect();
+    try {
+      const token = await getAccessTokenSilently();
+      connect(token);
+    } catch {
+      connect();
+    }
     setIsSessionActive(true);
     setIsMicOn(true);
     setIsCameraOn(true);
@@ -103,6 +115,14 @@ export default function App() {
     { key: 'shopping', label: 'Shopping', count: products.length },
   ];
 
+  if (isLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-gray-950 text-white">
+        <p className="text-gray-400">Loading...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="h-screen flex flex-col bg-gray-950 text-white">
       <StatusBar status={status} phase={phase} isMicOn={isMicOn} isCameraOn={isCameraOn} />
@@ -114,7 +134,7 @@ export default function App() {
         </div>
         {!isSessionActive ? (
           <button onClick={handleStartSession} className="bg-blue-600 hover:bg-blue-500 px-6 py-2 rounded-lg text-sm font-medium transition-colors">
-            Start Session
+            {isAuthenticated ? 'Start Session' : 'Log In'}
           </button>
         ) : (
           <button onClick={handleEndSession} className="bg-red-600 hover:bg-red-500 px-6 py-2 rounded-lg text-sm font-medium transition-colors">

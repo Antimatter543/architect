@@ -11,7 +11,7 @@ export function useWebSocket({ sessionId, onEvent, onAudio }: UseWebSocketOption
   const [status, setStatus] = useState<ConnectionStatus>('disconnected');
   const wsRef = useRef<WebSocket | null>(null);
 
-  const connect = useCallback(() => {
+  const connect = useCallback((authToken?: string) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
     setStatus('connecting');
 
@@ -24,6 +24,9 @@ export function useWebSocket({ sessionId, onEvent, onAudio }: UseWebSocketOption
     wsRef.current = ws;
 
     ws.onopen = () => {
+      if (authToken) {
+        ws.send(JSON.stringify({ type: 'auth', token: authToken }));
+      }
       setStatus('connected');
     };
 
