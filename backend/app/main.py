@@ -161,6 +161,7 @@ async def health():
 @app.websocket("/ws/{session_id}")
 async def websocket_endpoint(websocket: WebSocket, session_id: str):
     await websocket.accept()
+    session = None
 
     # Auth0 verification: expect first message to be {type: "auth", token: "..."}
     if AUTH0_ENABLED:
@@ -174,7 +175,11 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
             await websocket.close(code=4001, reason="Auth required")
             return
 
-        msg = json.loads(raw["text"])
+        try:
+            msg = json.loads(raw["text"])
+        except (json.JSONDecodeError, KeyError):
+            await websocket.close(code=4001, reason="Auth required")
+            return
         if msg.get("type") != "auth" or not msg.get("token"):
             await websocket.close(code=4001, reason="Auth required")
             return
@@ -210,7 +215,8 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
     except Exception as e:
         logger.error(f"WebSocket error: {e}")
     finally:
-        await session.cleanup()
+        if session:
+            await session.cleanup()
 
 
 if __name__ == "__main__":
