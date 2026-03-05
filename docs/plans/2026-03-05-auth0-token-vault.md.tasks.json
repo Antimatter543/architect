@@ -1,0 +1,13 @@
+{
+  "planPath": "docs/plans/2026-03-05-auth0-token-vault.md",
+  "tasks": [
+    {"id": 1, "subject": "Task 1: Add Auth0 dependencies and config env vars", "status": "pending"},
+    {"id": 2, "subject": "Task 2: Create auth0_client.py with JWT verification (TDD)", "status": "pending", "blockedBy": [1]},
+    {"id": 3, "subject": "Task 3: Update main.py to verify auth on WebSocket connect", "status": "pending", "blockedBy": [2]},
+    {"id": 4, "subject": "Task 4: Frontend - install Auth0 and wrap app with Auth0Provider", "status": "pending"},
+    {"id": 5, "subject": "Task 5: Frontend - login gate in App.tsx + token to WebSocket", "status": "pending", "blockedBy": [4]},
+    {"id": 6, "subject": "Task 6: Create CLAUDE.md project summary", "status": "pending"},
+    {"id": 7, "subject": "Task 7: Final verification", "status": "pending", "blockedBy": [3, 5, 6]}
+  ],
+  "lastUpdated": "2026-03-05T00:00:00Z"
+}
