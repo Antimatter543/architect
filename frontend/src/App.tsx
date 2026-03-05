@@ -93,12 +93,17 @@ export default function App() {
     try {
       const token = await getAccessTokenSilently();
       connect(token);
-    } catch {
-      connect();
+      setIsSessionActive(true);
+      setIsMicOn(true);
+      setIsCameraOn(true);
+    } catch (err) {
+      console.error('Failed to get access token:', err);
+      setTranscript(prev => [...prev, {
+        text: 'Authentication failed. Please try again.',
+        role: 'assistant',
+        timestamp: Date.now(),
+      }]);
     }
-    setIsSessionActive(true);
-    setIsMicOn(true);
-    setIsCameraOn(true);
   };
 
   const handleEndSession = () => {

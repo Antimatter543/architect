@@ -27,7 +27,7 @@ export function useWebSocket({ sessionId, onEvent, onAudio }: UseWebSocketOption
       if (authToken) {
         ws.send(JSON.stringify({ type: 'auth', token: authToken }));
       }
-      setStatus('connected');
+      // Don't setStatus('connected') here — wait for server's {type: "connected"} message
     };
 
     ws.onmessage = async (ev) => {
@@ -42,12 +42,15 @@ export function useWebSocket({ sessionId, onEvent, onAudio }: UseWebSocketOption
         try {
           const event = JSON.parse(ev.data) as ArchitectEvent;
           onEvent(event);
+          if (event.type === 'connected') {
+            setStatus('connected');
+          }
         } catch { /* ignore parse errors */ }
       }
     };
 
-    ws.onclose = () => {
-      setStatus('disconnected');
+    ws.onclose = (ev) => {
+      setStatus(ev.code >= 4000 ? 'error' : 'disconnected');
       wsRef.current = null;
     };
 
