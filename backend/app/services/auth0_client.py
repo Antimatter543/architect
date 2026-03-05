@@ -1,22 +1,42 @@
 import httpx
-from jose import jwt
 import logging
 import os
+import time
+from jose import jwt
 
 logger = logging.getLogger(__name__)
+
+_jwks_cache: dict = {}
+_jwks_cache_time: float = 0.0
+_JWKS_TTL_SECONDS = 3600
+
+
+def _fetch_jwks(domain: str) -> dict:
+    global _jwks_cache, _jwks_cache_time
+    if _jwks_cache and (time.monotonic() - _jwks_cache_time) < _JWKS_TTL_SECONDS:
+        return _jwks_cache
+    response = httpx.get(f"https://{domain}/.well-known/jwks.json", timeout=5.0)
+    response.raise_for_status()
+    _jwks_cache = response.json()
+    _jwks_cache_time = time.monotonic()
+    return _jwks_cache
 
 
 def verify_jwt(token: str) -> dict:
     """Verify Auth0 JWT via JWKS and return decoded claims.
 
-    Raises ValueError if key not found, JWTError if token invalid.
+    Raises ValueError if domain unconfigured or key not found.
+    Raises JWTError if token is invalid.
     """
     domain = os.getenv("AUTH0_DOMAIN", "")
     audience = os.getenv("AUTH0_AUDIENCE", "")
 
-    jwks_response = httpx.get(f"https://{domain}/.well-known/jwks.json")
-    jwks = jwks_response.json()
+    if not domain:
+        raise ValueError("AUTH0_DOMAIN is not configured")
+    if not audience:
+        raise ValueError("AUTH0_AUDIENCE is not configured")
 
+    jwks = _fetch_jwks(domain)
     unverified_header = jwt.get_unverified_header(token)
     kid = unverified_header.get("kid")
 
@@ -71,6 +91,6 @@ def get_vault_token(user_sub: str, connection: str) -> str | None:
         if resp.status_code == 200:
             return resp.json().get("access_token")
     except Exception as e:
-        logger.warning(f"Token Vault request failed: {e}")
+        logger.warning("Token Vault request failed: %s: %s", type(e).__name__, e)
 
     return None
