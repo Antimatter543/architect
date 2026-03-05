@@ -17,3 +17,9 @@ FIRESTORE_COLLECTION = os.getenv("FIRESTORE_COLLECTION", "architect_sessions")
 HOST = "0.0.0.0"
 PORT = int(os.getenv("PORT", "8080"))
 CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",")
+
+# Auth0
+AUTH0_DOMAIN = os.getenv("AUTH0_DOMAIN", "")
+AUTH0_AUDIENCE = os.getenv("AUTH0_AUDIENCE", "")
+AUTH0_MGMT_TOKEN = os.getenv("AUTH0_MGMT_TOKEN", "")
+AUTH0_ENABLED = os.getenv("AUTH0_ENABLED", "true").lower() == "true"
