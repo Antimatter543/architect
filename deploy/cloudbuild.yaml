@@ -22,8 +22,8 @@ steps:
       - '--min-instances=1'
       - '--timeout=3600'
       - '--session-affinity'
-      - '--set-secrets=GOOGLE_API_KEY=google-api-key:latest'
-      - '--set-env-vars=GOOGLE_CLOUD_PROJECT=$PROJECT_ID,GCS_BUCKET_NAME=architect-images-$PROJECT_ID,FIRESTORE_COLLECTION=architect_sessions'
+      - '--set-secrets=GOOGLE_API_KEY=google-api-key:latest,AUTH0_DOMAIN=auth0-domain:latest,AUTH0_AUDIENCE=auth0-audience:latest,AUTH0_MGMT_TOKEN=auth0-mgmt-token:latest'
+      - '--set-env-vars=GOOGLE_CLOUD_PROJECT=$PROJECT_ID,GCS_BUCKET_NAME=architect-images-$PROJECT_ID,FIRESTORE_COLLECTION=architect_sessions,AUTH0_ENABLED=true'
       - '--allow-unauthenticated'
 
   - name: 'node:20'
@@ -33,7 +33,12 @@ steps:
       - '-c'
       - |
         npm ci
-        VITE_BACKEND_URL=$$(gcloud run services describe architect-backend --region=us-central1 --format='value(status.url)') npm run build
+        export VITE_BACKEND_URL=$$(gcloud run services describe architect-backend --region=us-central1 --format='value(status.url)')
+        export VITE_AUTH0_DOMAIN=$$(gcloud secrets versions access latest --secret=auth0-domain)
+        export VITE_AUTH0_AUDIENCE=$$(gcloud secrets versions access latest --secret=auth0-audience)
+        # VITE_AUTH0_CLIENT_ID must be set as a substitution variable: --substitutions=_AUTH0_CLIENT_ID=...
+        export VITE_AUTH0_CLIENT_ID=$_AUTH0_CLIENT_ID
+        npm run build
         gsutil -m rsync -r dist/ gs://architect-frontend-$PROJECT_ID/
 
 images:
