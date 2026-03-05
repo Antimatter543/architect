@@ -7,7 +7,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
 from google.genai import types as genai_types
-from app.config import CORS_ORIGINS, HOST, PORT
+from app.config import CORS_ORIGINS, HOST, PORT, AUTH0_ENABLED
+from app.services.auth0_client import verify_jwt
 from app.agents.root_agent import create_root_agent
 
 logging.basicConfig(level=logging.INFO)
@@ -160,13 +161,41 @@ async def health():
 @app.websocket("/ws/{session_id}")
 async def websocket_endpoint(websocket: WebSocket, session_id: str):
     await websocket.accept()
-    session = ArchitectSession(session_id, websocket)
+
+    # Auth0 verification: expect first message to be {type: "auth", token: "..."}
+    if AUTH0_ENABLED:
+        try:
+            raw = await asyncio.wait_for(websocket.receive(), timeout=10.0)
+        except asyncio.TimeoutError:
+            await websocket.close(code=4001, reason="Auth timeout")
+            return
+
+        if "text" not in raw:
+            await websocket.close(code=4001, reason="Auth required")
+            return
+
+        msg = json.loads(raw["text"])
+        if msg.get("type") != "auth" or not msg.get("token"):
+            await websocket.close(code=4001, reason="Auth required")
+            return
+
+        try:
+            claims = verify_jwt(msg["token"])
+            user_id = claims["sub"]
+        except Exception as e:
+            logger.warning(f"Auth failed: {e}")
+            await websocket.close(code=4003, reason="Unauthorized")
+            return
+    else:
+        user_id = session_id
+
+    session = ArchitectSession(user_id, websocket)
 
     try:
         await session.setup()
         await session._send_json({
             "type": "connected",
-            "session_id": session_id,
+            "session_id": user_id,
             "message": "ARCHITECT is ready. Show me a room!",
         })
 
@@ -177,7 +206,7 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
             elif "bytes" in data:
                 await session.handle_message(data["bytes"])
     except WebSocketDisconnect:
-        logger.info(f"Client disconnected: {session_id}")
+        logger.info(f"Client disconnected: {user_id}")
     except Exception as e:
         logger.error(f"WebSocket error: {e}")
     finally:
